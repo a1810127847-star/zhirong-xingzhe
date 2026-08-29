@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="zhirong_qr_marker">
+    <static>true</static>
+    <link name="marker_link">
+      <visual name="white_backing">
+        <pose>0 0 -0.003 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.78 0.78 0.006</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+          <specular>0 0 0 1</specular>
+        </material>
+      </visual>
+      <visual name="qr_visual">
+        <pose>0 0 0.001 0 0 0</pose>
+        <geometry>
+          <plane>
+            <normal>0 0 1</normal>
+            <size>0.72 0.72</size>
+          </plane>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://zhirong_qr_marker/materials/scripts</uri>
+            <uri>model://zhirong_qr_marker/materials/textures</uri>
+            <name>Zhirong/NavigationQr</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

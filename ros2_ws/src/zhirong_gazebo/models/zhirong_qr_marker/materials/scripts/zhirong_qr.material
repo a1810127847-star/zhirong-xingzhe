@@ -1,0 +1,18 @@
+material Zhirong/NavigationQr
+{
+  technique
+  {
+    pass
+    {
+      lighting off
+      cull_hardware none
+      cull_software none
+      texture_unit
+      {
+        texture nav_home.png
+        filtering none
+        max_anisotropy 1
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+<!--
+  Internal-only multi-pose tree. Absolute server names keep the namespaced
+  BT Navigator connected to the root Nav2 planner and controller servers.
+-->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <Sequence name="NavigateThroughPosesOnce">
+      <ComputePathThroughPoses goals="{goals}" path="{path}" planner_id="GridBased" server_name="/compute_path_through_poses"/>
+      <FollowPath path="{path}" controller_id="FollowPath" goal_checker_id="patrol_goal_checker" server_name="/follow_path"/>
+    </Sequence>
+  </BehaviorTree>
+</root>

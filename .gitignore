@@ -1,0 +1,21 @@
+# ROS 2 / colcon generated directories
+build/
+install/
+log/
+
+# Local machine settings and runtime evidence
+.acceptance_panel.local.json
+artifacts/
+.plan_review/
+*.log
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Editors and operating systems
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

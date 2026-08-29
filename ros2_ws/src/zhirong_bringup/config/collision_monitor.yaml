@@ -1,0 +1,37 @@
+collision_monitor:
+  ros__parameters:
+    use_sim_time: true
+    base_frame_id: base_footprint
+    odom_frame_id: odom
+    cmd_vel_in_topic: /cmd_vel
+    cmd_vel_out_topic: /cmd_vel_safe
+    transform_tolerance: 0.3
+    source_timeout: 1.0
+    base_shift_correction: true
+    stop_pub_timeout: 1.0
+
+    polygons:
+      - FootprintApproach
+
+    # Predict collisions along the commanded trajectory instead of zeroing every
+    # Twist whenever a scan point enters a fixed front box. This keeps forward
+    # collision protection while allowing a safe in-place turn or rearward
+    # recovery when the corresponding swept footprint is clear.
+    FootprintApproach:
+      type: polygon
+      action_type: approach
+      footprint_topic: /local_costmap/published_footprint
+      time_before_collision: 1.2
+      simulation_time_step: 0.05
+      max_points: 3
+      visualize: true
+      polygon_pub_topic: /safety/predicted_footprint
+      enabled: true
+
+    observation_sources:
+      - scan
+
+    scan:
+      type: scan
+      topic: /scan
+      enabled: true

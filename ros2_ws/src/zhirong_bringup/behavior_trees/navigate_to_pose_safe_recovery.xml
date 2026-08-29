@@ -1,0 +1,32 @@
+<!--
+  Non-spinning bounded recovery for the guarded navigation action:
+  1. clear stale costmaps and back up 0.20 m if the rear scan is clear;
+  2. replan once, then fail explicitly instead of rotating in place or
+     retrying forever.
+-->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <RecoveryNode number_of_retries="1" name="NavigateSafeRecovery">
+      <PipelineSequence name="NavigateWithReplanning">
+        <RateController hz="1.0">
+          <RecoveryNode number_of_retries="1" name="ComputePathToPose">
+            <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased" server_name="/compute_path_to_pose"/>
+            <ClearEntireCostmap name="ClearGlobalCostmap-Context" service_name="/global_costmap/clear_entirely_global_costmap"/>
+          </RecoveryNode>
+        </RateController>
+        <RecoveryNode number_of_retries="1" name="FollowPath">
+          <FollowPath path="{path}" controller_id="FollowPath" goal_checker_id="general_goal_checker" server_name="/follow_path"/>
+          <ClearEntireCostmap name="ClearLocalCostmap-Context" service_name="/local_costmap/clear_entirely_local_costmap"/>
+        </RecoveryNode>
+      </PipelineSequence>
+      <ReactiveFallback name="RecoveryFallbackNoSpin">
+        <GoalUpdated/>
+        <Sequence name="ClearAndBackUp">
+          <ClearEntireCostmap name="ClearLocalCostmap-Recovery" service_name="/local_costmap/clear_entirely_local_costmap"/>
+          <ClearEntireCostmap name="ClearGlobalCostmap-Recovery" service_name="/global_costmap/clear_entirely_global_costmap"/>
+          <BackUp backup_dist="0.20" backup_speed="0.08" server_name="/backup"/>
+        </Sequence>
+      </ReactiveFallback>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>

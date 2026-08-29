@@ -1,0 +1,13 @@
+color_qr_detector:
+  ros__parameters:
+    use_sim_time: true
+    input_topic: /camera/color/image_raw
+    debug_topic: /vision/debug_image
+    detection_topic: /vision/detections
+    event_topic: /vision/events
+    color_topic: /vision/color
+    qr_topic: /vision/qr
+    min_color_area_ratio: 0.025
+    required_consecutive_frames: 3
+    process_every_n_frames: 2
+    event_cooldown_sec: 8.0

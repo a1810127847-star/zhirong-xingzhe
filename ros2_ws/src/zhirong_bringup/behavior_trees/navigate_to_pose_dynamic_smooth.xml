@@ -1,0 +1,33 @@
+<!--
+  Smooth dynamic-obstacle navigation:
+  - global path is refreshed at 1 Hz;
+  - DynamicPath follows each new path as a forward arc and never requests an
+    in-place heading rotation;
+  - recovery is bounded to costmap clearing plus one short backup.
+-->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <RecoveryNode number_of_retries="1" name="NavigateDynamicSmooth">
+      <PipelineSequence name="NavigateWithDynamicReplanning">
+        <RateController hz="3.0">
+          <RecoveryNode number_of_retries="1" name="ComputeDynamicPath">
+            <ComputePathToPose goal="{goal}" path="{path}" planner_id="PatrolGrid" server_name="/compute_path_to_pose"/>
+            <ClearEntireCostmap name="ClearGlobalCostmap-Dynamic" service_name="/global_costmap/clear_entirely_global_costmap"/>
+          </RecoveryNode>
+        </RateController>
+        <RecoveryNode number_of_retries="1" name="FollowDynamicPath">
+          <FollowPath path="{path}" controller_id="DynamicPath" goal_checker_id="patrol_goal_checker" server_name="/follow_path"/>
+          <ClearEntireCostmap name="ClearLocalCostmap-Dynamic" service_name="/local_costmap/clear_entirely_local_costmap"/>
+        </RecoveryNode>
+      </PipelineSequence>
+      <ReactiveFallback name="DynamicRecoveryNoSpin">
+        <GoalUpdated/>
+        <Sequence name="DynamicClearAndBackUp">
+          <ClearEntireCostmap name="ClearLocalCostmap-DynamicRecovery" service_name="/local_costmap/clear_entirely_local_costmap"/>
+          <ClearEntireCostmap name="ClearGlobalCostmap-DynamicRecovery" service_name="/global_costmap/clear_entirely_global_costmap"/>
+          <BackUp backup_dist="0.20" backup_speed="0.08" server_name="/backup"/>
+        </Sequence>
+      </ReactiveFallback>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>

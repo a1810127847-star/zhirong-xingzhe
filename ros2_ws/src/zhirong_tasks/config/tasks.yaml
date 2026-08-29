@@ -1,0 +1,53 @@
+settings:
+  default_patrol: demo
+  max_retries: 1
+  task_timeout_sec: 90.0
+  patrol_pass_radius: 0.25
+  patrol_terminal_radius: 0.18
+  patrol_handoff_distance: 0.45
+
+stations:
+  home:
+    x: 0.0
+    y: 0.0
+    yaw: 0.0
+  east:
+    x: 0.85
+    y: 0.0
+    yaw: 0.0
+  northeast:
+    x: 0.85
+    y: 0.85
+    yaw: 1.57079632679
+  north:
+    x: 0.0
+    y: 0.85
+    yaw: 3.14159265359
+  blue_station:
+    # Keep the stop pose outside the obstacle's collision-monitor stop zone
+    # while retaining a clear view of the blue marker.
+    x: 1.00
+    y: 1.35
+    yaw: 0.0
+  qr_station:
+    x: 1.20
+    y: -1.75
+    yaw: 0.0
+
+patrols:
+  demo:
+    - east
+    - northeast
+    - north
+    - home
+  vision:
+    - blue_station
+    - qr_station
+    - home
+
+vision_mappings:
+  color:
+    blue: "goto blue_station"
+  qr:
+    "NAV:HOME": "return_home"
+    "NAV:PATROL": "patrol demo"
