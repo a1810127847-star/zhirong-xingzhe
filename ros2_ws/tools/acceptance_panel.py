@@ -26,15 +26,23 @@ PROJECT_ROOT = TOOLS_DIR.parent.parent
 CONFIG_PATH = PROJECT_ROOT / ".acceptance_panel.local.json"
 LOG_DIR = PROJECT_ROOT / "artifacts" / "acceptance_panel_logs"
 CREATE_NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-CONFIG_KEYS = ("wsl_distro", "wsl_workspace", "repo_url", "branch", "source_root")
+CONFIG_KEYS = (
+    "wsl_distro",
+    "wsl_workspace",
+    "repo_url",
+    "branch",
+    "source_root",
+    "panel_geometry",
+)
 DEFAULT_CONFIG = {
     "wsl_distro": os.environ.get("ZHIRONG_WSL_DISTRO", "Ubuntu-22.04"),
     "wsl_workspace": os.environ.get(
         "ZHIRONG_WORKSPACE", "$HOME/zhirong_xingzhe_ws"
     ),
-    "repo_url": "",
+    "repo_url": "https://github.com/a1810127847-star/zhirong-xingzhe.git",
     "branch": "master",
     "source_root": str(PROJECT_ROOT),
+    "panel_geometry": os.environ.get("ZHIRONG_PANEL_GEOMETRY", ""),
 }
 
 
@@ -42,7 +50,7 @@ def load_local_config() -> dict[str, str]:
     config = DEFAULT_CONFIG.copy()
     if CONFIG_PATH.is_file():
         try:
-            payload = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+            payload = json.loads(CONFIG_PATH.read_text(encoding="utf-8-sig"))
             if isinstance(payload, dict):
                 for key in CONFIG_KEYS:
                     value = payload.get(key)
@@ -189,15 +197,23 @@ class AcceptancePanel(tk.Tk):
         },
     }
 
-    def __init__(self) -> None:
+    def __init__(self, auto_start: bool = False) -> None:
         super().__init__()
         self.config = load_local_config()
         RUNTIME_CONFIG.update(self.config)
         self.title("智融行者 · ROS2 项目验收面板")
-        # Keep the acceptance UI on the 24-inch secondary monitor to the
-        # right of the 2560x1440 primary display.
-        self.geometry("1120x1000+2860+380")
-        self.minsize(980, 900)
+        screen_width = max(self.winfo_screenwidth(), 1024)
+        screen_height = max(self.winfo_screenheight(), 720)
+        width = min(1120, screen_width - 80)
+        height = min(900, screen_height - 100)
+        saved_geometry = self.config.get("panel_geometry", "")
+        if re.fullmatch(r"\d+x\d+[+-]\d+[+-]\d+", saved_geometry):
+            self.geometry(saved_geometry)
+        else:
+            left = max(20, (screen_width - width) // 2)
+            top = max(20, (screen_height - height) // 2)
+            self.geometry(f"{width}x{height}+{left}+{top}")
+        self.minsize(min(900, width), min(680, height))
         self.configure(bg=self.COLORS["bg"])
 
         LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -221,6 +237,8 @@ class AcceptancePanel(tk.Tk):
         self.after(120, self._drain_events)
         self.after(800, self._refresh_system_status_async)
         self.after(1200, self._tail_runtime_logs)
+        if auto_start:
+            self.after(1500, self._start_full_system)
 
     def _configure_styles(self) -> None:
         style = ttk.Style(self)
@@ -532,7 +550,12 @@ class AcceptancePanel(tk.Tk):
         window = tk.Toplevel(self)
         self.setup_window = window
         window.title("跨机器联调 · 环境、源码与构建")
-        window.geometry("880x650+3600+410")
+        self.update_idletasks()
+        width = min(880, max(760, self.winfo_screenwidth() - 100))
+        height = min(650, max(560, self.winfo_screenheight() - 140))
+        left = max(20, self.winfo_x() + (self.winfo_width() - width) // 2)
+        top = max(20, self.winfo_y() + (self.winfo_height() - height) // 2)
+        window.geometry(f"{width}x{height}+{left}+{top}")
         window.minsize(820, 600)
         window.configure(bg=self.COLORS["bg"])
         window.transient(self)
@@ -712,6 +735,11 @@ class AcceptancePanel(tk.Tk):
         if not source_root.is_absolute():
             raise ValueError("Windows 源码目录必须是绝对路径。")
         config["source_root"] = str(source_root.resolve(strict=False))
+        panel_geometry = config["panel_geometry"]
+        if panel_geometry and not re.fullmatch(
+            r"\d+x\d+[+-]\d+[+-]\d+", panel_geometry
+        ):
+            raise ValueError("验收面板窗口坐标格式不合法。")
         if config["repo_url"]:
             self._validate_repo_url(config["repo_url"])
         return config
@@ -884,7 +912,10 @@ class AcceptancePanel(tk.Tk):
                 if dirty.stdout.strip():
                     raise RuntimeError("源码目录存在未提交修改；为防止覆盖，已拒绝更新。请先提交或备份。")
                 self._run_streaming_process(
-                    ["git", "-C", str(target), "fetch", "--prune", repo_url, branch],
+                    [
+                        "git", "-c", "http.sslBackend=openssl",
+                        "-C", str(target), "fetch", "--prune", repo_url, branch,
+                    ],
                     timeout=180,
                 )
                 self._run_streaming_process(
@@ -897,7 +928,8 @@ class AcceptancePanel(tk.Tk):
             target.parent.mkdir(parents=True, exist_ok=True)
             self._run_streaming_process(
                 [
-                    "git", "clone", "--branch", branch, "--single-branch",
+                    "git", "-c", "http.sslBackend=openssl", "clone",
+                    "--branch", branch, "--single-branch",
                     "--", repo_url, str(target),
                 ],
                 timeout=600,
@@ -1226,7 +1258,6 @@ class AcceptancePanel(tk.Tk):
                     system_log = LOG_DIR / "full_system.log"
                     system_handle = open(system_log, "ab", buffering=0)
                     command = ros_command(
-                        "export MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA; "
                         "export GAZEBO_MODEL_DATABASE_URI=; "
                         f"export GAZEBO_MODEL_PATH={workspace_shell_ref('/install/zhirong_gazebo/share/zhirong_gazebo/models')}; "
                         "exec ros2 launch zhirong_bringup system.launch.py "
@@ -1532,6 +1563,7 @@ class AcceptancePanel(tk.Tk):
 
 def self_test() -> int:
     required = [
+        PROJECT_ROOT / "一键部署并打开验收.cmd",
         TOOLS_DIR / "auto_navigate_test.py",
         TOOLS_DIR / "measure_straight_motion.py",
         TOOLS_DIR / "validate_dynamic_avoidance.py",
@@ -1540,6 +1572,8 @@ def self_test() -> int:
         TOOLS_DIR / "validate_vision_task_loop.py",
         TOOLS_DIR / "emergency_stop.py",
         TOOLS_DIR / "bootstrap_machine.sh",
+        TOOLS_DIR / "windows_bootstrap.ps1",
+        TOOLS_DIR / "build_windows_deployment_bundle.ps1",
         TOOLS_DIR / "setup_workspace.sh",
     ]
     missing = [str(path) for path in required if not path.is_file()]
@@ -1560,10 +1594,15 @@ def self_test() -> int:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--self-test", action="store_true")
+    parser.add_argument(
+        "--auto-start",
+        action="store_true",
+        help="Open the panel and automatically start Gazebo, RViz, and Nav2.",
+    )
     args = parser.parse_args()
     if args.self_test:
         return self_test()
-    app = AcceptancePanel()
+    app = AcceptancePanel(auto_start=args.auto_start)
     app.mainloop()
     return 0
 

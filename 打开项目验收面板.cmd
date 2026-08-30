@@ -11,6 +11,7 @@ if %errorlevel% equ 0 (
   exit /b 0
 )
 
-echo [ERROR] Windows Python 3 was not found. Install Python 3 with tkinter first.
+echo [ERROR] Windows Python 3 was not found.
+echo 首次部署请双击“一键部署并打开验收.cmd”，它会自动安装所需环境。
 pause
 exit /b 1

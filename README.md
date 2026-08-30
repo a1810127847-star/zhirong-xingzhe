@@ -29,31 +29,40 @@
 - `/camera/depth/points` 三维点云
 - `odom -> base_footprint` TF
 
-## 跨机器一键联调
+## Windows 裸机一键部署
 
-在 Windows 双击 `打开项目验收面板.cmd`，然后点击右上角的“跨机联调配置”。
-面板按以下顺序提供可视化入口：
+给验收人员发送 `智融行者验收一键部署.zip`。对方完整解压后，只需双击：
 
-1. 保存 WSL 发行版、Linux 工作区、GitHub 仓库、分支和 Windows 源码目录。
-2. 检测 Windows Git、WSL、Ubuntu、ROS2、Gazebo、RViz 和构建工作区。
-3. 从 GitHub Clone；已有仓库只允许在工作区干净时执行 `fast-forward` 更新。
-4. 经二次确认后，在 Ubuntu 22.04 WSL 内安装 ROS2 Humble 基础环境。
-5. 经二次确认后运行 `rosdep` 安装 `package.xml` 声明的项目依赖。
-6. 链接本仓库 ROS2 包并执行 `colcon build --symlink-install`。
-7. 显示待提交文件并再次确认后，提交并推送源码到 GitHub。
-
-本机配置写入 `.acceptance_panel.local.json`，该文件和运行日志已加入
-`.gitignore`。仓库地址中禁止嵌入账号、密码或 Token；GitHub 身份验证由
-Windows Git Credential Manager 或 SSH Agent 负责。GitHub 空仓库需要先在网站上创建一次。
-
-如果 Windows 尚未安装 WSL，请先在管理员 PowerShell 中执行：
-
-```powershell
-wsl --install -d Ubuntu-22.04
+```text
+一键部署并打开验收.cmd
 ```
 
-重启并完成 Ubuntu 首次用户名设置后，再回到验收面板执行上述步骤。系统安装脚本
-`ros2_ws/tools/bootstrap_machine.sh` 只接受 Ubuntu 22.04 amd64，避免在错误系统上改包源。
+入口会自动申请管理员权限并依次完成：
+
+1. 检查 64 位 Windows 版本和 WinGet。
+2. 安装缺失的 Windows Git 与带 Tk 的 Python 3。
+3. 安装 WSL2 与 Ubuntu 22.04；需要重启时登记一次性续装任务，登录后自动继续。
+4. 从公开 GitHub 仓库 Clone `master` 分支；已有干净仓库只执行 `fast-forward` 更新。
+5. 在 Ubuntu 中安装 ROS2 Humble、Gazebo、Nav2、SLAM 和 `package.xml` 依赖。
+6. 建立 `$HOME/zhirong_xingzhe_ws` 并执行 `colcon build --symlink-install`。
+7. 运行验收面板自检，打开面板并自动启动 Gazebo、RViz 和 Nav2。
+
+默认 Windows 源码目录为 `文档\ZhirongXingzhe`，部署日志位于
+`%LOCALAPPDATA%\ZhirongXingzhe\bootstrap.log`。安装过程可安全重跑；如果目标
+仓库存在未提交修改，安装器会停止而不会覆盖。
+
+可在项目根目录执行以下命令重新生成发送包：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass `
+  -File .\ros2_ws\tools\build_windows_deployment_bundle.ps1
+```
+
+部署完成后，日常重新打开只需双击 `打开项目验收面板.cmd`。右上角“跨机联调配置”
+仍保留检测、Clone/更新、依赖安装、构建和 GitHub 发布的分步入口，供故障排查使用。
+
+系统安装脚本 `ros2_ws/tools/bootstrap_machine.sh` 只接受 Ubuntu 22.04 amd64，
+避免在错误系统上修改软件源。完整收件人说明见 `给验收人员的部署说明.txt`。
 
 ## 工作空间
 

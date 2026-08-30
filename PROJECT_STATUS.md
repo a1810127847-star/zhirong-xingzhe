@@ -337,16 +337,22 @@ Nav2 DWB、多点巡航 Nav2 Regulated Pure Pursuit，PPO 未替换交付控制�
   `VISION_TASK_LOOP_VALIDATION_OK`。
 - Gazebo 图形启动入口现跳过在线模型库并显式使用项目本地模型目录；已实际
   解除 `Preparing your world`/黑屏，图形窗口恢复后约 `62 FPS`。
-- 当前显示布局固定为右侧 24 寸副屏：Gazebo、RViz 和验收面板的启动坐标
-  均避开 `2560×1440` 主屏；若 Windows 以后调整显示器排列，需要同步更新
-  三处窗口坐标。
+- 验收面板默认按当前 Windows 屏幕尺寸自动居中并限制最小/最大窗口尺寸；本机
+  通过不入 Git 的 `panel_geometry` 保留右侧 24 寸副屏位置，新电脑不继承该坐标。
+  Gazebo/RViz 由 WSLg 窗口管理器放置，不再在公共配置中假设特定双屏布局。
 - 2026-08-30 验收面板新增“跨机联调配置”：本机保存 WSL 发行版、Linux
   工作区、GitHub 地址、目标分支和源码目录；支持环境检测、Clone/仅快进更新、
   ROS2 Humble 基础环境安装、`rosdep` 依赖安装、`colcon` 构建，以及经文件
   清单和二次确认后的 GitHub commit/push。路径不再依赖固定 WSL 用户名，
   本机配置、运行日志、常见密钥和 Token 不进入 Git。
-- 当前仓库尚未配置 `origin`，GitHub 地址保持待用户填写；在仓库地址明确前，
-  未执行任何远端创建、Clone 或 push，不能把“发布入口已完成”表述成“已上传”。
+- GitHub 公共仓库已建立并完成首次推送：
+  `https://github.com/a1810127847-star/zhirong-xingzhe`，默认分支为 `master`。
+- 新增可转发的 Windows 裸机部署入口 `一键部署并打开验收.cmd`：自动申请
+  管理员权限，使用 WinGet 安装 Git/Python，安装 WSL2/Ubuntu 22.04，必要时
+  通过 RunOnce 在重启登录后续装，随后 Clone/快进源码、安装 ROS2 与项目
+  依赖、构建并以 `--auto-start` 打开验收面板和完整仿真。
+- 一键部署脚本已完成 PowerShell/Python 静态检查；尚未在另一台真正的全新
+  Windows 机器上做端到端安装，因此对外验收前仍需执行一次裸机复现测试。
 
 仍然只代表 Gazebo 仿真通过；实体底盘需要重新标定有效轮距、轮胎摩擦、
 编码器比例和电机闭环参数，不能直接照搬仿真数值。

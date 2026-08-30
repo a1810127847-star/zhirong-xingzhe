@@ -12,7 +12,7 @@ If probeResult = 0 Then
 Else
     probeResult = shell.Run("cmd.exe /c where pythonw.exe >nul 2>&1", 0, True)
     If probeResult <> 0 Then
-        MsgBox "Windows Python 3 was not found. Install Python 3 with tkinter first.", 16, "Acceptance panel"
+        MsgBox "Windows Python 3 was not found. Run 一键部署并打开验收.cmd first.", 16, "Acceptance panel"
         WScript.Quit 1
     End If
     command = "pythonw.exe " & Chr(34) & panelScript & Chr(34)
